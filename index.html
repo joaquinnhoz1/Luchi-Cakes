@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="preload" as="image" href="catalogo/public/oreo.png" fetchpriority="high">
+<link rel="preload" as="image" href="catalogo/public/tiramisu.png">
+<link rel="preload" as="image" href="catalogo/public/chocotorta.png">
 <title>Luchi Cakes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,6 +40,7 @@ html,body{
   transform:translate(-50%,-50%);
   transition:width .25s var(--ease),height .25s var(--ease),background .25s;
   will-change:left,top;
+  display:none;
 }
 #cursor.big{width:12px;height:12px;background:var(--rose-300);}
 #cursor-ring{
@@ -46,6 +50,7 @@ html,body{
   transform:translate(-50%,-50%);
   transition:width .3s var(--ease),height .3s var(--ease),border-color .3s;
   will-change:left,top;
+  display:none;
 }
 #cursor-ring.big{width:54px;height:54px;border-color:rgba(232,160,184,.75);}
 
@@ -347,7 +352,7 @@ nav{
 
 /* ─── MOBILE ─── */
 @media(max-width:768px){
-  html,body{overflow:hidden}
+  html,body{overflow:hidden;cursor:auto}
   .slider{flex-direction:column}
   .slider.live .panel{flex:0.3}
   .slider.live .panel.on{flex:4}
@@ -364,6 +369,14 @@ nav{
   .cart-drawer{width:100%;}
   .toast{font-size:12px;padding:12px 20px;}
 }
+
+/* ─── TOUCH DEVICES ─── */
+@media(hover:none),(pointer:coarse){
+  .panel,.btn-cart,.nav-cart-btn,.qty-btn,.btn-pedido,.cart-close{
+    touch-action:manipulation;
+  }
+}
+.panel{-webkit-user-select:none;user-select:none;}
 </style>
 </head>
 <body>
@@ -516,43 +529,55 @@ nav{
 /* ── CURSOR ── */
 const cur  = document.getElementById('cursor');
 const ring = document.getElementById('cursor-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{
-  mx=e.clientX;my=e.clientY;
-  cur.style.left=mx+'px';cur.style.top=my+'px';
-});
-(function loopRing(){
-  rx+=(mx-rx)*.11;ry+=(my-ry)*.11;
-  ring.style.left=rx+'px';ring.style.top=ry+'px';
-  requestAnimationFrame(loopRing);
-})();
+let mx=0,my=0,rx=0,ry=0,cursorOn=false;
+
 function bigCursor(){ cur.classList.add('big'); ring.classList.add('big'); }
 function smallCursor(){ cur.classList.remove('big'); ring.classList.remove('big'); }
 
+/* Cursor solo aparece tras el primer movimiento real de mouse */
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+  if(!cursorOn){ cur.style.display='block'; ring.style.display='block'; cursorOn=true; }
+});
+/* Cualquier toque oculta el cursor permanentemente en esa sesión */
+document.addEventListener('touchstart',()=>{
+  cur.style.display='none'; ring.style.display='none'; cursorOn=false;
+},{passive:true});
+
+(function loopRing(){
+  rx+=(mx-rx)*.11; ry+=(my-ry)*.11;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(loopRing);
+})();
+
 /* ── SLIDER ── */
-const slider   = document.getElementById('slider');
-const panels   = [...document.querySelectorAll('.panel')];
-const hintEl   = document.getElementById('hint');
+const slider = document.getElementById('slider');
+const panels = [...document.querySelectorAll('.panel')];
+const hintEl = document.getElementById('hint');
 let hinted = false;
 
 function activate(p){
   slider.classList.add('live');
   panels.forEach(x=>x.classList.remove('on'));
   p.classList.add('on');
-  if(!hinted){hintEl.classList.add('gone');hinted=true;}
+  if(!hinted){ hintEl.classList.add('gone'); hinted=true; }
 }
 function deactivate(){
   slider.classList.remove('live');
   panels.forEach(x=>x.classList.remove('on'));
 }
+
+/* Desktop: hover */
+panels.forEach(p=>p.addEventListener('mouseenter',()=>{ if(cursorOn) activate(p); }));
+slider.addEventListener('mouseleave',()=>{ if(cursorOn) deactivate(); });
+
+/* Mobile: click (rápido gracias a touch-action:manipulation) */
 panels.forEach(p=>{
-  p.addEventListener('mouseenter',()=>activate(p));
-});
-slider.addEventListener('mouseleave',deactivate);
-panels.forEach(p=>{
-  p.addEventListener('click',()=>{
-    if(window.innerWidth>=768)return;
-    p.classList.contains('on')?deactivate():activate(p);
+  p.addEventListener('click',e=>{
+    if(cursorOn) return;                    /* ignorar si es mouse real */
+    if(e.target.closest('.btn-cart')) return;
+    p.classList.contains('on') ? deactivate() : activate(p);
   });
 });
 
