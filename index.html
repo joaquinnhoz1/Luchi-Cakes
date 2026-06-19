@@ -581,8 +581,8 @@ if(hasMouse){
   /* Mobile: touchstart para respuesta inmediata sin delay */
   panels.forEach(p=>{
     p.addEventListener('touchstart',e=>{
-      if(e.target.closest('.btn-cart')) return; /* dejar que el botón maneje su propio tap */
-      activate(p);
+      if(e.target.closest('.btn-cart')) return;
+      p.classList.contains('on') ? deactivate() : activate(p);
     },{passive:true});
   });
 }
