@@ -318,11 +318,49 @@ select.finput{appearance:none;cursor:pointer;}
 /* ── RESPONSIVE ── */
 @media(max-width:960px){.g4{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:640px){
+  /* Layout base */
   #menuBtn{display:block;}
   .sidebar{position:fixed;left:-240px;height:100vh;transition:left .25s;z-index:200;}
   .sidebar.open{left:0;}
   .g4,.g2,.g3{grid-template-columns:1fr;}
   .fgrid{grid-template-columns:1fr;}
+
+  /* Sin scroll horizontal */
+  html,body{overflow-x:hidden;}
+  .main,.content{overflow-x:hidden;max-width:100vw;}
+  .content{padding:14px 12px;}
+  .topbar{padding:0 14px;}
+  .topbar-date{display:none;}
+
+  /* Filas acción (search + botón, tabs + botón) → apiladas */
+  .fb{flex-direction:column;align-items:stretch;gap:8px;}
+  .fb .btn{justify-content:center;}
+  .swrap{width:100% !important;}
+  .ftabs{overflow-x:auto;width:100%;}
+
+  /* Tablas: solo scroll vertical, columnas secundarias ocultas */
+  .tw{overflow-x:hidden;}
+  table{width:100%;font-size:12px;}
+  th,td{padding:8px 6px;}
+
+  /* Productos: ocultar Costo, Ganancia, Stock */
+  #s-productos th:nth-child(3),#s-productos td:nth-child(3),
+  #s-productos th:nth-child(4),#s-productos td:nth-child(4),
+  #s-productos th:nth-child(5),#s-productos td:nth-child(5){display:none;}
+
+  /* Materiales: ocultar Mínimo y Costo/u */
+  #s-materiales th:nth-child(3),#s-materiales td:nth-child(3),
+  #s-materiales th:nth-child(4),#s-materiales td:nth-child(4){display:none;}
+
+  /* Ventas: ocultar ID de pedido */
+  #s-ventas th:nth-child(1),#s-ventas td:nth-child(1){display:none;}
+
+  /* Botones de acción en tablas */
+  .btn.bsm{padding:5px 7px;font-size:11px;}
+
+  /* KPI cards */
+  .kcard{padding:14px;}
+  .kvalue{font-size:18px;}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;}}
 </style>
