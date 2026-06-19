@@ -370,8 +370,10 @@ nav{
   .toast{font-size:12px;padding:12px 20px;}
 }
 
-/* ─── TOUCH DEVICES ─── */
+/* ─── TOUCH / NO-MOUSE ─── */
 @media(hover:none),(pointer:coarse){
+  *{ cursor:auto !important; }
+  #cursor,#cursor-ring{ display:none !important; }
   .panel,.btn-cart,.nav-cart-btn,.qty-btn,.btn-pedido,.cart-close{
     touch-action:manipulation;
   }
@@ -526,30 +528,33 @@ nav{
 </div>
 
 <script>
+/* ── INPUT DETECTION ── */
+/* (hover:hover) and (pointer:fine) = mouse real; todo lo demás = touch */
+const hasMouse = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+
 /* ── CURSOR ── */
 const cur  = document.getElementById('cursor');
 const ring = document.getElementById('cursor-ring');
-let mx=0,my=0,rx=0,ry=0,cursorOn=false;
 
-function bigCursor(){ cur.classList.add('big'); ring.classList.add('big'); }
-function smallCursor(){ cur.classList.remove('big'); ring.classList.remove('big'); }
+function bigCursor(){ if(!hasMouse)return; cur.classList.add('big'); ring.classList.add('big'); }
+function smallCursor(){ if(!hasMouse)return; cur.classList.remove('big'); ring.classList.remove('big'); }
 
-/* Cursor solo aparece tras el primer movimiento real de mouse */
-document.addEventListener('mousemove',e=>{
-  mx=e.clientX; my=e.clientY;
-  cur.style.left=mx+'px'; cur.style.top=my+'px';
-  if(!cursorOn){ cur.style.display='block'; ring.style.display='block'; cursorOn=true; }
-});
-/* Cualquier toque oculta el cursor permanentemente en esa sesión */
-document.addEventListener('touchstart',()=>{
-  cur.style.display='none'; ring.style.display='none'; cursorOn=false;
-},{passive:true});
-
-(function loopRing(){
-  rx+=(mx-rx)*.11; ry+=(my-ry)*.11;
-  ring.style.left=rx+'px'; ring.style.top=ry+'px';
-  requestAnimationFrame(loopRing);
-})();
+if(hasMouse){
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=mx+'px'; cur.style.top=my+'px';
+    if(cur.style.display==='none'||!cur.style.display){ cur.style.display='block'; ring.style.display='block'; }
+  });
+  (function loopRing(){
+    rx+=(mx-rx)*.11; ry+=(my-ry)*.11;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(loopRing);
+  })();
+} else {
+  /* Eliminar del DOM — no pueden interferir en touch */
+  cur.remove(); ring.remove();
+}
 
 /* ── SLIDER ── */
 const slider = document.getElementById('slider');
@@ -568,18 +573,19 @@ function deactivate(){
   panels.forEach(x=>x.classList.remove('on'));
 }
 
-/* Desktop: hover */
-panels.forEach(p=>p.addEventListener('mouseenter',()=>{ if(cursorOn) activate(p); }));
-slider.addEventListener('mouseleave',()=>{ if(cursorOn) deactivate(); });
-
-/* Mobile: click (rápido gracias a touch-action:manipulation) */
-panels.forEach(p=>{
-  p.addEventListener('click',e=>{
-    if(cursorOn) return;                    /* ignorar si es mouse real */
-    if(e.target.closest('.btn-cart')) return;
-    p.classList.contains('on') ? deactivate() : activate(p);
+if(hasMouse){
+  /* Desktop: expandir al hover */
+  panels.forEach(p=>p.addEventListener('mouseenter',()=>activate(p)));
+  slider.addEventListener('mouseleave',deactivate);
+} else {
+  /* Mobile: touchstart para respuesta inmediata sin delay */
+  panels.forEach(p=>{
+    p.addEventListener('touchstart',e=>{
+      if(e.target.closest('.btn-cart')) return; /* dejar que el botón maneje su propio tap */
+      activate(p);
+    },{passive:true});
   });
-});
+}
 
 /* ── CART STATE ── */
 const CART_KEY = 'luchi_cart';
