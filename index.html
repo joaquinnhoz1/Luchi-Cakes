@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luchi Cakes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --ease: cubic-bezier(0.76,0,0.24,1);
+  --ease-out: cubic-bezier(0.16,1,0.3,1);
+  --dur: 0.65s;
+  --rose-100: #f8e4ef;
+  --rose-300: #e8a0b8;
+  --rose-500: #c96080;
+  --rose-900: #1a0d14;
+}
+
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  background:#0f0609;
+  font-family:'Inter',sans-serif;
+  cursor:none;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── CURSOR ─── */
+#cursor{
+  position:fixed;width:8px;height:8px;
+  border-radius:50%;background:#fff;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .25s var(--ease),height .25s var(--ease),background .25s;
+  will-change:left,top;
+}
+#cursor.big{width:12px;height:12px;background:var(--rose-300);}
+#cursor-ring{
+  position:fixed;width:36px;height:36px;
+  border-radius:50%;border:1px solid rgba(232,160,184,.4);
+  pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:width .3s var(--ease),height .3s var(--ease),border-color .3s;
+  will-change:left,top;
+}
+#cursor-ring.big{width:54px;height:54px;border-color:rgba(232,160,184,.75);}
+
+/* ─── NAV ─── */
+nav{
+  position:fixed;top:0;left:0;right:0;
+  padding:16px 48px;
+  display:flex;justify-content:space-between;align-items:center;
+  z-index:300;
+  background:linear-gradient(to bottom,rgba(20,6,12,.65),transparent);
+}
+.logo{text-decoration:none;display:flex;align-items:center;}
+.logo img{
+  height:144px;width:auto;
+  mix-blend-mode:multiply;
+  transition:opacity .3s;
+}
+.logo img:hover{opacity:.85}
+.nav-links{
+  position:absolute;left:50%;transform:translateX(-50%);
+  display:flex;gap:40px;
+}
+.nav-link{
+  font-size:11px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.45);text-decoration:none;cursor:none;transition:color .3s;
+}
+.nav-link:hover{color:var(--rose-300)}
+
+/* ─── CART BUTTON ─── */
+.nav-cart-btn{
+  position:relative;
+  background:none;border:1px solid rgba(232,160,184,.35);
+  padding:10px 14px;cursor:none;
+  display:flex;align-items:center;gap:8px;
+  color:var(--rose-300);
+  transition:border-color .3s,background .3s;
+}
+.nav-cart-btn:hover{
+  border-color:var(--rose-300);background:rgba(232,160,184,.1);
+}
+.nav-cart-btn svg{width:18px;height:18px;flex-shrink:0}
+.cart-badge{
+  position:absolute;top:-7px;right:-7px;
+  min-width:18px;height:18px;
+  border-radius:999px;
+  background:var(--rose-500);
+  color:#fff;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;
+  opacity:0;transform:scale(0);
+  transition:opacity .25s,transform .25s var(--ease-out);
+}
+.cart-badge.visible{opacity:1;transform:scale(1)}
+
+/* ─── SLIDER ─── */
+.slider{display:flex;width:100vw;height:100dvh;}
+
+/* ─── PANEL ─── */
+.panel{
+  position:relative;flex:1;overflow:hidden;cursor:none;
+  transition:flex var(--dur) var(--ease);
+}
+.slider.live .panel{flex:0.55}
+.slider.live .panel.on{flex:4}
+
+/* ─── BG IMAGE ─── */
+.panel-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  transition:transform var(--dur) var(--ease), filter var(--dur) var(--ease);
+  filter:brightness(.45) saturate(.5);
+}
+.panel.on .panel-bg{
+  transform:scale(1.03);
+  filter:brightness(1) saturate(1);
+}
+
+/* ─── GRADIENT OVERLAY ─── */
+.panel-overlay{position:absolute;inset:0;z-index:1;}
+
+/* ─── VERTICAL LABEL ─── */
+.panel-label{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%) rotate(-90deg);
+  white-space:nowrap;
+  font-family:'Playfair Display',serif;
+  font-size:clamp(12px,1.1vw,15px);font-weight:400;
+  letter-spacing:.38em;text-transform:uppercase;
+  color:rgba(248,228,239,.45);z-index:2;pointer-events:none;
+  transition:opacity var(--dur) var(--ease);
+}
+.panel.on .panel-label{opacity:0}
+
+/* ─── GHOST NUMBER ─── */
+.panel-num{
+  position:absolute;bottom:8%;right:18px;
+  font-family:'Playfair Display',serif;
+  font-size:clamp(70px,10vw,140px);font-weight:900;line-height:1;
+  color:rgba(232,160,184,.07);z-index:1;pointer-events:none;user-select:none;
+  transition:opacity var(--dur) var(--ease);
+}
+.slider.live .panel:not(.on) .panel-num{opacity:0}
+
+/* ─── ACCENT LINE ─── */
+.panel-line{
+  position:absolute;bottom:0;left:0;right:0;height:2px;z-index:4;
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .55s .2s var(--ease);
+}
+.panel.on .panel-line{transform:scaleX(1)}
+
+/* ─── CONTENT ─── */
+.panel-content{
+  position:absolute;bottom:0;left:0;right:0;padding:52px 44px;z-index:3;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .4s .12s var(--ease), transform .4s .12s var(--ease);
+  pointer-events:none;
+}
+.panel.on .panel-content{opacity:1;transform:translateY(0);pointer-events:auto;}
+
+.p-tag{
+  font-size:10px;font-weight:500;letter-spacing:.35em;text-transform:uppercase;
+  color:rgba(248,228,239,.45);margin-bottom:18px;
+}
+.p-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(40px,4vw,64px);font-weight:900;line-height:.9;
+  color:#fff;margin-bottom:22px;
+}
+.p-title em{font-style:italic;font-weight:400;display:inline;}
+.p-rule{width:40px;height:1px;margin-bottom:20px;}
+.p-desc{
+  font-size:14px;font-weight:300;line-height:1.75;
+  color:rgba(248,228,239,.6);max-width:30ch;margin-bottom:36px;
+}
+.p-actions{display:flex;align-items:center;gap:24px;}
+
+.btn-cart{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:15px 28px;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  border:none;cursor:none;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),opacity .2s;
+}
+.btn-cart:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(201,96,128,.4);}
+.btn-cart:active{transform:scale(.97);}
+.btn-cart svg{width:14px;height:14px;flex-shrink:0;}
+
+.price-block span{
+  display:block;font-size:10px;font-weight:400;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(248,228,239,.38);margin-bottom:3px;
+}
+.price-block strong{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(20px,2vw,26px);font-weight:700;
+  color:rgba(255,255,255,.9);
+}
+
+/* ─── HINT ─── */
+.hint{
+  position:fixed;bottom:38px;left:50%;transform:translateX(-50%);
+  font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(232,160,184,.3);z-index:200;pointer-events:none;
+  transition:opacity .6s;animation:fadein 1s 1.8s both;
+}
+.hint.gone{opacity:0}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* ─── TOAST ─── */
+.toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(28,13,24,.96);
+  border:1px solid rgba(232,160,184,.3);
+  color:var(--rose-100);
+  font-size:13px;font-weight:400;letter-spacing:.04em;
+  padding:14px 28px;
+  white-space:nowrap;
+  z-index:600;pointer-events:none;
+  opacity:0;transition:opacity .3s,transform .3s var(--ease-out);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ─── CART BACKDROP ─── */
+.cart-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:400;opacity:0;pointer-events:none;
+  transition:opacity .4s;
+}
+.cart-backdrop.open{opacity:1;pointer-events:auto;}
+
+/* ─── CART DRAWER ─── */
+.cart-drawer{
+  position:fixed;top:0;right:0;bottom:0;width:380px;
+  background:#180912;
+  border-left:1px solid rgba(232,160,184,.12);
+  z-index:500;
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .45s var(--ease);
+}
+.cart-drawer.open{transform:translateX(0);}
+
+.cart-head{
+  padding:28px 28px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid rgba(232,160,184,.1);
+}
+.cart-head h3{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:700;color:#fff;
+}
+.cart-close{
+  background:none;border:none;cursor:none;
+  color:rgba(255,255,255,.4);
+  font-size:22px;line-height:1;
+  transition:color .2s;padding:4px 8px;
+}
+.cart-close:hover{color:var(--rose-300);}
+
+.cart-empty{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  color:rgba(248,228,239,.3);font-size:13px;letter-spacing:.05em;
+}
+.cart-empty svg{width:40px;height:40px;opacity:.25;}
+
+.cart-list{
+  flex:1;overflow-y:auto;padding:16px 28px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.cart-list::-webkit-scrollbar{width:3px;}
+.cart-list::-webkit-scrollbar-track{background:transparent;}
+.cart-list::-webkit-scrollbar-thumb{background:rgba(232,160,184,.2);border-radius:3px;}
+
+.cart-item{
+  display:flex;gap:14px;align-items:center;
+  padding:14px;
+  background:rgba(232,160,184,.06);
+  border:1px solid rgba(232,160,184,.1);
+}
+.cart-item-img{
+  width:56px;height:56px;flex-shrink:0;
+  background-size:cover;background-position:center;
+}
+.cart-item-info{flex:1;min-width:0;}
+.cart-item-name{
+  font-size:13px;font-weight:500;color:#fff;
+  margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cart-item-price{
+  font-family:'Playfair Display',serif;
+  font-size:15px;font-weight:700;color:var(--rose-300);
+}
+.cart-item-qty{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.qty-btn{
+  background:none;border:1px solid rgba(232,160,184,.25);
+  color:rgba(255,255,255,.7);
+  width:26px;height:26px;cursor:none;
+  font-size:15px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .2s,color .2s;
+}
+.qty-btn:hover{border-color:var(--rose-300);color:var(--rose-300);}
+.qty-num{
+  font-size:14px;font-weight:600;color:#fff;min-width:16px;text-align:center;
+}
+
+.cart-foot{
+  padding:20px 28px 28px;
+  border-top:1px solid rgba(232,160,184,.1);
+}
+.cart-total-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:18px;
+}
+.cart-total-label{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(248,228,239,.4);
+}
+.cart-total-price{
+  font-family:'Playfair Display',serif;
+  font-size:26px;font-weight:700;color:#fff;
+}
+.btn-pedido{
+  width:100%;padding:16px;
+  background:var(--rose-500);border:none;cursor:none;
+  color:#fff;font-family:'Inter',sans-serif;
+  font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background .3s,transform .2s;
+}
+.btn-pedido:hover{background:#d4708c;transform:translateY(-1px);}
+.btn-pedido svg{width:16px;height:16px;}
+
+/* ─── MOBILE ─── */
+@media(max-width:768px){
+  html,body{overflow:hidden}
+  .slider{flex-direction:column}
+  .slider.live .panel{flex:0.3}
+  .slider.live .panel.on{flex:4}
+  .panel-label{transform:translate(-50%,-50%);font-size:12px;letter-spacing:.28em;}
+  nav{padding:10px 18px;}
+  .logo img{height:100px;}
+  .nav-links{display:none}
+  .panel-content{padding:28px 22px}
+  .p-desc{display:none}
+  .p-title{font-size:clamp(28px,7vw,44px)}
+  .btn-cart{padding:12px 20px;font-size:10px;}
+  .panel-num{display:none}
+  .hint{display:none}
+  .cart-drawer{width:100%;}
+  .toast{font-size:12px;padding:12px 20px;}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="#" class="logo">
+    <img src="logo.png" alt="Luchi Cakes">
+  </a>
+  <div class="nav-links">
+    <a href="#" class="nav-link">Inicio</a>
+    <a href="#" class="nav-link">Nosotros</a>
+    <a href="#" class="nav-link">Pedidos</a>
+  </div>
+  <button class="nav-cart-btn" id="cartBtn" aria-label="Ver carrito">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 01-8 0"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge">0</span>
+  </button>
+</nav>
+
+<!-- ── SLIDER ── -->
+<div class="slider" id="slider">
+
+  <!-- OREO -->
+  <div class="panel" style="background-color:#1c0d18" data-id="oreo">
+    <div class="panel-bg" style="background-image:url('catalogo/public/oreo.png')"></div>
+    <div class="panel-overlay" style="background:linear-gradient(to top,rgba(28,13,24,.97) 0%,rgba(28,13,24,.6) 45%,rgba(28,13,24,.22) 100%)"></div>
+    <div class="panel-num">01</div>
+    <div class="panel-label">Oreo</div>
+    <div class="panel-line" style="background:#f0c8dc"></div>
+    <div class="panel-content">
+      <p class="p-tag">Edición Clásica · Nº01</p>
+      <h2 class="p-title">Torta de <em>Oreo</em></h2>
+      <div class="p-rule" style="background:#f0c8dc"></div>
+      <p class="p-desc">Capas de crema suave con Oreos enteras y trituradas. El equilibrio perfecto entre lo crocante y lo cremoso.</p>
+      <div class="p-actions">
+        <button class="btn-cart" style="background:#f0c8dc;color:#1c0d18"
+          data-name="Torta de Oreo" data-price="5000" data-img="catalogo/public/oreo.png">
+          Agregar al Carrito
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </button>
+        <div class="price-block"><span>Desde</span><strong>$5.000</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIRAMISÚ -->
+  <div class="panel" style="background-color:#1f0f1a" data-id="tiramisu">
+    <div class="panel-bg" style="background-image:url('catalogo/public/tiramisu.png')"></div>
+    <div class="panel-overlay" style="background:linear-gradient(to top,rgba(31,15,26,.97) 0%,rgba(31,15,26,.6) 45%,rgba(31,15,26,.22) 100%)"></div>
+    <div class="panel-num">02</div>
+    <div class="panel-label">Tiramisú</div>
+    <div class="panel-line" style="background:#e890b0"></div>
+    <div class="panel-content">
+      <p class="p-tag">Edición Italiana · Nº02</p>
+      <h2 class="p-title"><em>Tiramisú</em></h2>
+      <div class="p-rule" style="background:#e890b0"></div>
+      <p class="p-desc">Mascarpone importado, café espresso y cacao amargo. La receta italiana auténtica con capas que se deshacen en el paladar.</p>
+      <div class="p-actions">
+        <button class="btn-cart" style="background:#e890b0;color:#fff"
+          data-name="Tiramisú" data-price="5000" data-img="catalogo/public/tiramisu.png">
+          Agregar al Carrito
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </button>
+        <div class="price-block"><span>Desde</span><strong>$5.000</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHOCOTORTA -->
+  <div class="panel" style="background-color:#1a0910" data-id="chocotorta">
+    <div class="panel-bg" style="background-image:url('catalogo/public/chocotorta.png')"></div>
+    <div class="panel-overlay" style="background:linear-gradient(to top,rgba(26,9,16,.97) 0%,rgba(26,9,16,.6) 45%,rgba(26,9,16,.22) 100%)"></div>
+    <div class="panel-num">03</div>
+    <div class="panel-label">Chocotorta</div>
+    <div class="panel-line" style="background:#c86080"></div>
+    <div class="panel-content">
+      <p class="p-tag">Edición Argentina · Nº03</p>
+      <h2 class="p-title">Choco<em>torta</em></h2>
+      <div class="p-rule" style="background:#c86080"></div>
+      <p class="p-desc">La reina de los postres argentinos. Chocolinas, dulce de leche y crema en capas generosas que no dejan a nadie indiferente.</p>
+      <div class="p-actions">
+        <button class="btn-cart" style="background:#c86080;color:#fff"
+          data-name="Chocotorta" data-price="5000" data-img="catalogo/public/chocotorta.png">
+          Agregar al Carrito
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </button>
+        <div class="price-block"><span>Desde</span><strong>$5.000</strong></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="hint" id="hint">Pasá el cursor para explorar</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── CART ── -->
+<div class="cart-backdrop" id="cartBackdrop"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>Tu Pedido</h3>
+    <button class="cart-close" id="cartClose">✕</button>
+  </div>
+  <div class="cart-empty" id="cartEmpty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 01-8 0"/>
+    </svg>
+    <span>Tu carrito está vacío</span>
+  </div>
+  <div class="cart-list" id="cartList" style="display:none"></div>
+  <div class="cart-foot" id="cartFoot" style="display:none">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-price" id="cartTotal">$0</span>
+    </div>
+    <button class="btn-pedido" id="btnPedido">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.14 1.18 2 2 0 012.11 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.46-.46a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
+      </svg>
+      Enviar pedido por WhatsApp
+    </button>
+  </div>
+</div>
+
+<script>
+/* ── CURSOR ── */
+const cur  = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+(function loopRing(){
+  rx+=(mx-rx)*.11;ry+=(my-ry)*.11;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  requestAnimationFrame(loopRing);
+})();
+function bigCursor(){ cur.classList.add('big'); ring.classList.add('big'); }
+function smallCursor(){ cur.classList.remove('big'); ring.classList.remove('big'); }
+
+/* ── SLIDER ── */
+const slider   = document.getElementById('slider');
+const panels   = [...document.querySelectorAll('.panel')];
+const hintEl   = document.getElementById('hint');
+let hinted = false;
+
+function activate(p){
+  slider.classList.add('live');
+  panels.forEach(x=>x.classList.remove('on'));
+  p.classList.add('on');
+  if(!hinted){hintEl.classList.add('gone');hinted=true;}
+}
+function deactivate(){
+  slider.classList.remove('live');
+  panels.forEach(x=>x.classList.remove('on'));
+}
+panels.forEach(p=>{
+  p.addEventListener('mouseenter',()=>activate(p));
+});
+slider.addEventListener('mouseleave',deactivate);
+panels.forEach(p=>{
+  p.addEventListener('click',()=>{
+    if(window.innerWidth>=768)return;
+    p.classList.contains('on')?deactivate():activate(p);
+  });
+});
+
+/* ── CART STATE ── */
+const CART_KEY = 'luchi_cart';
+function loadCart(){ try{ return JSON.parse(localStorage.getItem(CART_KEY))||[]; }catch(e){ return []; } }
+function saveCart(c){ localStorage.setItem(CART_KEY,JSON.stringify(c)); }
+
+let cart = loadCart();
+
+/* ── CART UI ── */
+const cartDrawer   = document.getElementById('cartDrawer');
+const cartBackdrop = document.getElementById('cartBackdrop');
+const cartBadge    = document.getElementById('cartBadge');
+const cartEmpty    = document.getElementById('cartEmpty');
+const cartList     = document.getElementById('cartList');
+const cartFoot     = document.getElementById('cartFoot');
+const cartTotal    = document.getElementById('cartTotal');
+const toast        = document.getElementById('toast');
+let toastTimer;
+
+function openCart(){
+  cartDrawer.classList.add('open');
+  cartBackdrop.classList.add('open');
+}
+function closeCart(){
+  cartDrawer.classList.remove('open');
+  cartBackdrop.classList.remove('open');
+}
+
+function formatPrice(n){
+  return '$'+n.toLocaleString('es-AR');
+}
+
+function renderCart(){
+  const total = cart.reduce((s,i)=>s+i.price*i.qty, 0);
+  const count = cart.reduce((s,i)=>s+i.qty, 0);
+
+  /* badge */
+  cartBadge.textContent = count;
+  cartBadge.classList.toggle('visible', count>0);
+
+  /* empty / list */
+  if(cart.length===0){
+    cartEmpty.style.display='flex';
+    cartList.style.display='none';
+    cartFoot.style.display='none';
+    return;
+  }
+  cartEmpty.style.display='none';
+  cartList.style.display='flex';
+  cartFoot.style.display='block';
+
+  cartList.innerHTML = cart.map((item,i)=>`
+    <div class="cart-item">
+      <div class="cart-item-img" style="background-image:url('${item.img}')"></div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-price">${formatPrice(item.price*item.qty)}</div>
+      </div>
+      <div class="cart-item-qty">
+        <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+      </div>
+    </div>
+  `).join('');
+
+  cartTotal.textContent = formatPrice(total);
+
+  /* cursor events for new buttons */
+  cartDrawer.querySelectorAll('button').forEach(el=>{
+    el.addEventListener('mouseenter',bigCursor);
+    el.addEventListener('mouseleave',smallCursor);
+  });
+}
+
+function changeQty(idx, delta){
+  cart[idx].qty += delta;
+  if(cart[idx].qty<=0) cart.splice(idx,1);
+  saveCart(cart);
+  renderCart();
+}
+
+function addToCart(name, price, img){
+  const existing = cart.find(i=>i.name===name);
+  if(existing){ existing.qty++; }
+  else { cart.push({name,price:parseInt(price),img,qty:1}); }
+  saveCart(cart);
+  renderCart();
+  showToast(name+' agregado al carrito');
+}
+
+function showToast(msg){
+  clearTimeout(toastTimer);
+  toast.textContent = msg;
+  toast.classList.add('show');
+  toastTimer = setTimeout(()=>toast.classList.remove('show'),2400);
+}
+
+/* ── BOTONES AGREGAR ── */
+document.querySelectorAll('.btn-cart').forEach(btn=>{
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    addToCart(btn.dataset.name, btn.dataset.price, btn.dataset.img);
+  });
+  btn.addEventListener('mouseenter',bigCursor);
+  btn.addEventListener('mouseleave',smallCursor);
+});
+
+/* ── NAV CART BTN ── */
+document.getElementById('cartBtn').addEventListener('click',openCart);
+document.getElementById('cartClose').addEventListener('click',closeCart);
+cartBackdrop.addEventListener('click',closeCart);
+document.getElementById('cartBtn').addEventListener('mouseenter',bigCursor);
+document.getElementById('cartBtn').addEventListener('mouseleave',smallCursor);
+document.getElementById('cartClose').addEventListener('mouseenter',bigCursor);
+document.getElementById('cartClose').addEventListener('mouseleave',smallCursor);
+
+/* ── WHATSAPP ── */
+document.getElementById('btnPedido').addEventListener('click',()=>{
+  if(cart.length===0)return;
+  const lines = cart.map(i=>`• ${i.name} x${i.qty} = ${formatPrice(i.price*i.qty)}`).join('\n');
+  const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const msg = encodeURIComponent(`¡Hola Luchi Cakes! 🎂\n\nQuisiera hacer el siguiente pedido:\n\n${lines}\n\nTotal: ${formatPrice(total)}\n\n¿Tienen disponibilidad?`);
+  // Guardar pedido en localStorage para el panel admin
+  try {
+    const stored = JSON.parse(localStorage.getItem('luchi_orders')||'[]');
+    const prods = JSON.parse(localStorage.getItem('luchi_products')||'[]');
+    const nextId = stored.length + 1;
+    const today = new Date().toISOString().slice(0,10);
+    stored.push({
+      id: 'ORD-' + String(nextId).padStart(3,'0'),
+      date: today,
+      customer: 'Pedido WhatsApp',
+      phone: '',
+      items: cart.map(i=>{
+        const p = prods.find(p=>p.name===i.name);
+        return {name:i.name, qty:i.qty, price:i.price, cost:p?.cost||0};
+      }),
+      total,
+      status: 'nuevo',
+      notes: '',
+      deliveredAt: null,
+    });
+    localStorage.setItem('luchi_orders', JSON.stringify(stored));
+  } catch(e){}
+  window.open(`https://wa.me/?text=${msg}`,'_blank');
+});
+document.getElementById('btnPedido').addEventListener('mouseenter',bigCursor);
+document.getElementById('btnPedido').addEventListener('mouseleave',smallCursor);
+
+/* ── INIT ── */
+renderCart();
+</script>
+</body>
+</html>
